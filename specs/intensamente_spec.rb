@@ -27,6 +27,10 @@ describe 'Test intensamente' do
     Asentamiento_Selectivo.new 'corto'
   }
 
+  let(:emocion_compuesta){
+    Emocion_Compuesta.new
+  }
+
   it 'deberia asentar alegria' do
     expect(riley.eventos_del_dia.length).to eq(0)
     riley.vivir(evento_1)
@@ -148,5 +152,63 @@ describe 'Test intensamente' do
     riley.eventos_del_dia.push evento_1
     riley.descansar
     expect(riley.eventos_del_dia.length).to eq(0)
+  end
+
+  it 'deberia rememorar un recuerdo' do
+    riley.vivir evento_1
+    riley.procesos_mentales.push Asentamiento.new
+    riley.procesos_mentales.push Liberar_Eventos_Del_Dia.new
+    riley.descansar
+    expect(riley.eventos_del_dia.length).to eq(0)
+    riley.rememorar
+    expect(riley.eventos_del_dia.length).to eq(1)
+  end
+
+  it 'deberia negar recuerdo' do
+    riley.vivir evento_1
+    emocion_compuesta.emociones.push Tristeza.instance
+    riley.emocion = emocion_compuesta
+    expect(riley.emocion.niega? evento_1).to eq(true)
+  end
+
+  it 'deberia ser alegre' do
+    emocion_compuesta.emociones.push Tristeza.instance
+    emocion_compuesta.emociones.push Furia.instance
+    emocion_compuesta.emociones.push Alegria.instance
+    riley.emocion = emocion_compuesta
+    expect(riley.emocion.es_alegre?).to eq(true)
+  end
+
+  it 'deberia aplicar logica de asentar recuerdos' do
+    emocion_compuesta.emociones.push Tristeza.instance
+    emocion_compuesta.emociones.push Alegria.instance
+    riley.emocion = emocion_compuesta
+    riley.vivir evento_1
+    riley.procesos_mentales.push Asentamiento.new
+    riley.descansar
+    expect(riley.felicidad).to eq(900)
+    expect(riley.pensamientos_centrales.length).to eq(2)
+  end
+
+  it 'deberia tener recuerdos repetidos' do
+    riley.emocion = Terror.instance
+    riley.vivir evento_1
+    riley.vivir evento_2
+    riley.vivir evento_1
+    riley.procesos_mentales.push Profundizacion.new
+    riley.descansar
+    expect(riley.evento_repetido? evento_1).to eq(true)
+  end
+
+  it 'deberia tener un deja vu' do
+    riley.emocion = Terror.instance
+    riley.vivir evento_1
+    riley.vivir evento_2
+    riley.procesos_mentales.push Profundizacion.new
+    riley.procesos_mentales.push Liberar_Eventos_Del_Dia.new
+    riley.descansar
+    expect(riley.eventos_del_dia.length).to eq(0)
+    riley.vivir evento_1
+    expect(riley.deja_vu?).to eq(true)
   end
 end
