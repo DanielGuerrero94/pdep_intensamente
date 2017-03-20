@@ -1,7 +1,7 @@
 require 'rspec'
 require_relative '../src/Intensamente'
 
-describe 'My behaviour' do
+describe 'Test intensamente' do
 
   let(:riley){
     Persona.new
@@ -74,19 +74,79 @@ describe 'My behaviour' do
     riley.vivir evento_1
     riley.vivir evento_2
     riley.vivir evento_3
-    riley.procesos_mentales.push(asentamiento)
-    expect(riley.largo_plazo.length).to eq(0)
+    riley.procesos_mentales.push asentamiento
+    expect(riley.pensamientos_centrales.length).to eq(0)
     riley.descansar
-    expect(riley.largo_plazo.length).to eq(3)
+    expect(riley.pensamientos_centrales.length).to eq(3)
   end
 
   it 'deberia asentar todos menos uno' do
     riley.vivir evento_1
     riley.vivir evento_2
     riley.vivir evento_3
-    riley.procesos_mentales.push(asentamiento_selectivo)
+    riley.procesos_mentales.push asentamiento_selectivo
+    expect(riley.pensamientos_centrales.length).to eq(0)
+    riley.descansar
+    expect(riley.pensamientos_centrales.length).to eq(2)
+  end
+
+  it 'deberia tener en recuerdos de largo plazo todo menos el evento_1' do
+    riley.vivir evento_1
+    riley.asentar evento_1
+    expect(riley.pensamientos_centrales.length).to eq(1)
+    riley.felicidad = 10
+    riley.vivir evento_2
+    riley.vivir evento_3
+    riley.asentar evento_2
+    riley.asentar evento_3
+    #Tiene que seguir estando solo el evento 1
+    expect(riley.pensamientos_centrales.length).to eq(1)
+    riley.procesos_mentales.push Profundizacion.new
     expect(riley.largo_plazo.length).to eq(0)
     riley.descansar
     expect(riley.largo_plazo.length).to eq(2)
+  end
+
+  it 'deberia tener la misma emocion dominante' do
+    riley.vivir evento_1
+    riley.vivir evento_2
+    riley.vivir evento_3
+    riley.procesos_mentales.push Asentamiento.new
+    riley.procesos_mentales.push Control_Hormonal.new
+    riley.descansar
+    control = Control_Hormonal.new
+    expect(control.desequilibrio_hormonal?(riley)).to eq(true)
+    expect(riley.pensamientos_centrales.length).to eq(0)
+    expect(riley.felicidad).to eq(750)
+  end
+
+  it 'deberia haber un pensamiento central en largo plazo' do
+    riley.vivir evento_1
+    riley.vivir evento_2
+    riley.emocion = Furia.instance
+    riley.vivir evento_3
+    riley.procesos_mentales.push Asentamiento.new
+    riley.procesos_mentales.push Control_Hormonal.new
+    riley.largo_plazo.push evento_1
+    riley.descansar
+    expect(riley.pensamientos_centrales.length).to eq(0)
+    expect(riley.felicidad).to eq(750)
+  end
+
+  it 'deberia sumar felicidad' do
+    riley.procesos_mentales.push Restauracion_Cognitiva.new
+    expect(riley.felicidad).to eq(1000)
+    riley.descansar
+    expect(riley.felicidad).to eq(1000)
+    riley.felicidad -= 200
+    riley.descansar
+    expect(riley.felicidad).to eq(900)
+  end
+
+  it 'deberia borrar eventos_del_dia' do
+    riley.procesos_mentales.push Liberar_Eventos_Del_Dia.new
+    riley.eventos_del_dia.push evento_1
+    riley.descansar
+    expect(riley.eventos_del_dia.length).to eq(0)
   end
 end

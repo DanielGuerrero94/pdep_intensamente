@@ -14,7 +14,7 @@ class Persona
 
   def vivir(evento)
     evento.emocion = self.emocion
-    self.eventos_del_dia.push(evento)
+    self.eventos_del_dia.push evento
   end
 
   def asentar(evento)
@@ -26,7 +26,7 @@ class Persona
   end
 
   def convertir_en_central(evento)
-    self.pensamientos_centrales.push(evento)
+    self.pensamientos_centrales.push evento
   end
 
   def recuerdos_recientes
@@ -34,15 +34,13 @@ class Persona
   end
 
   def recuerdos_dificiles_de_expresar
-    self.pensamientos_centrales.select do |pensamiento|
-      pensamiento.descripcion.length > 10
-    end
+    self.pensamientos_centrales.select{|pensamiento|
+      pensamiento.descripcion.length > 10}
   end
 
   def descansar
-    self.procesos_mentales.each do |proceso|
-      proceso.procesar self
-    end
+    self.procesos_mentales.each{|proceso|
+      proceso.procesar self}
   end
 end
 
@@ -75,7 +73,7 @@ class Alegria < Emocion
   def asentar(evento,persona)
     super evento,persona
     if persona.felicidad > 500
-      persona.convertir_en_central(evento)
+      persona.convertir_en_central evento
     end
   end
 
@@ -89,7 +87,7 @@ class Tristeza < Emocion
 
   def asentar(evento,persona)
     super evento,persona
-    persona.convertir_en_central(evento)
+    persona.convertir_en_central evento
     persona.felicidad *= 0.9
   end
 
@@ -112,10 +110,8 @@ end
 
 class Asentamiento
   def procesar(persona)
-    persona.eventos_del_dia.each do |evento|
-      persona.asentar(evento)
-      persona.largo_plazo.push(evento)
-    end
+    persona.eventos_del_dia.each{|evento|
+      evento.emocion.asentar(evento,persona)}
   end
 end
 
@@ -127,13 +123,71 @@ class Asentamiento_Selectivo
   end
 
   def procesar(persona)
-    filtered = persona.eventos_del_dia.select do |evento|
-      ! evento.descripcion.include? self.palabra
-    end
+    persona.eventos_del_dia
+        .select{|evento|
+      ! evento.descripcion.include? self.palabra}
+        .each{|evento|
+      persona.asentar(evento)}
+  end
+end
 
-    filtered.each do |evento|
-      persona.asentar(evento)
-      persona.largo_plazo.push(evento)
+class Profundizacion
+  def procesar(persona)
+      persona.eventos_del_dia
+          .select{|evento|
+        !persona.pensamientos_centrales.member?(evento) && !persona.niega?(evento)}
+          .each{|evento|
+        persona.largo_plazo.push evento
+      }
     end
+end
+
+class Control_Hormonal
+  def procesar(persona)
+    if desequilibrio_hormonal?(persona)
+      self.disminuir_felicidad(persona)
+      self.perder_pensamientos(persona)
+    end
+  end
+
+  def desequilibrio_hormonal?(persona)
+    self.central_en_largo_plazo?(persona) || self.emocion_domina?(persona)
+  end
+
+  def emocion_domina?(persona)
+    primer_emocion = persona.eventos_del_dia.first.emocion
+    persona.eventos_del_dia.all?{|evento| evento.emocion == primer_emocion}
+  end
+
+  def central_en_largo_plazo?(persona)
+    persona.pensamientos_centrales.any?{|evento| persona.largo_plazo.member? evento}
+  end
+
+  def disminuir_felicidad(persona)
+    persona.felicidad *= 0.75
+  end
+
+  def perder_pensamientos(persona)
+    #No debe ser la mejor forma de sacar 3, pero no quiero hacer 3 shift ni un for y take solo los retorna
+    persona.pensamientos_centrales = persona.pensamientos_centrales.drop(3)
+  end
+end
+
+class Restauracion_Cognitiva
+  #No se tirar exceptions pero quizas deberia
+  def procesar(persona)
+    if !self.supera_el_maximo? persona
+      persona.felicidad += 100
+    end
+  end
+
+  def supera_el_maximo?(persona)
+    persona.felicidad + 100 > 1000
+  end
+end
+
+class Liberar_Eventos_Del_Dia
+  def procesar(persona)
+    persona.eventos_del_dia.clear
   end
 end
