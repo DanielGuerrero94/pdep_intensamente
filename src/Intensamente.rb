@@ -25,6 +25,10 @@ class Persona
     self.emocion.niega? evento
   end
 
+  def rememorar
+    self.eventos_del_dia.push(self.pensamientos_centrales.shift)
+  end
+
   def convertir_en_central(evento)
     self.pensamientos_centrales.push evento
   end
@@ -41,6 +45,14 @@ class Persona
   def descansar
     self.procesos_mentales.each{|proceso|
       proceso.procesar self}
+  end
+
+  def evento_repetido?evento
+    self.pensamientos_centrales.count(evento) > 0 || self.largo_plazo.count(evento) > 0
+  end
+
+  def deja_vu?
+    self.eventos_del_dia.any?{|evento| self.evento_repetido? evento}
   end
 end
 
@@ -65,6 +77,30 @@ class Emocion
   def niega?evento
     false
   end
+
+  def alegre?
+    false
+  end
+end
+
+class Emocion_Compuesta < Emocion
+  attr_accessor :emociones
+
+  def initialize
+    self.emociones = []
+  end
+
+  def niega?evento
+    self.emociones.all?{|emocion| emocion.niega?evento}
+  end
+
+  def alegre?
+    self.emociones.any?{|emocion| emocion == Alegria.instance}
+  end
+
+  def asentar(evento,persona)
+    self.emociones.each{|emocion| emocion.asentar evento,persona}
+  end
 end
 
 class Alegria < Emocion
@@ -79,6 +115,10 @@ class Alegria < Emocion
 
   def niega?(evento)
     evento.emocion != self
+  end
+
+  def alegre?
+    true
   end
 end
 

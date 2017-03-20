@@ -176,7 +176,7 @@ describe 'Test intensamente' do
     emocion_compuesta.emociones.push Furia.instance
     emocion_compuesta.emociones.push Alegria.instance
     riley.emocion = emocion_compuesta
-    expect(riley.emocion.es_alegre?).to eq(true)
+    expect(riley.emocion.alegre?).to eq(true)
   end
 
   it 'deberia aplicar logica de asentar recuerdos' do
